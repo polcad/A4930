@@ -1,0 +1,31 @@
+Setup udev for the usrp
+
+1. Define a group for the usrp
+
+sudo groupadd usrp
+
+2. Add users to the usrp group
+
+sudo usermod -a -G usrp [username]
+
+3. Add a new udev rule
+
+echo 'ACTION=="add", BUS=="usb", SYSFS{idVendor}=="fffe", SYSFS{idProduct}=="0002", GROUP:="usrp", MODE:="0660"' > tmpfile
+sudo chown root.root tmpfile
+sudo mv tmpfile /etc/udev/rules.d/10-usrp.rules
+
+4. Load the new udev rule
+
+sudo udevadm control --reload-rules
+
+Verify the setup
+
+Power cycle the usrp device and:
+
+lsusb | grep fffe:0002
+
+You should see an entry with ID: fffe:0002
+
+ls -lR /dev/bus/usb
+
+You should see a device file with group usrp and mode crw-rw----

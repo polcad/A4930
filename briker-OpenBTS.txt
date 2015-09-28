@@ -1,0 +1,27 @@
+#!/usr/bin/php -q
+<?php
+
+/***
+ * Look for an IMSI from internal Briker database and returns extension number
+ *
+ * Author: Anton Raharja (anton@itmn.co.id)
+ *         Asoka Wardhana (asoka@itmn.co.id)
+ */
+
+ob_implicit_flush(false);
+set_time_limit(30);
+error_reporting(0);
+
+require('/var/lib/asterisk/agi-bin/phpagi.php');
+
+$agi = new AGI();
+
+$return = $agi->get_variable('CALLERIDIMSI');
+if ($callerid_imsi = $return['data']) {
+	if ($callerid_real = @system("asterisk -rx 'database show device' |grep '$callerid_imsi'|cut -d'/' -f3")) {
+		$agi->verbose("CALLERIDREAL => $callerid_real");
+		$agi->set_variable('CALLERIDREAL', $callerid_real);
+	}
+}
+
+?>

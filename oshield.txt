@@ -1,0 +1,132 @@
+cd /home/YOURNAME/downloads/
+
+sudo apt-get -y install git-core autoconf automake  libtool g++ python-dev swig \
+
+pkg-config libboost-all-dev libfftw3-dev libcppunit-dev libgsl0-dev \
+
+libusb-dev sdcc libsdl1.2-dev python-wxgtk2.8 python-numpy \
+
+python-cheetah python-lxml doxygen python-qt4 python-qwt5-qt4 libxi-dev \
+
+libqt4-opengl-dev libqwt5-qt4-dev libfontconfig1-dev libxrender-dev
+
+sudo apt-get install libaudio-dev
+
+wget http://www.sbrac.org/files/build-gnuradio
+
+sudo /bin/bash ./build-gnuradio prereqs
+
+wget http://gnuradio.org/releases/gnuradio/gnuradio-3.4.2.tar.gz
+
+sudo apt-get install tar
+
+tar -xvf gnuradio-3.4.2.tar.gz
+
+sudo rm gnuradio-3.4.2/usrp/host/lib/db_wbxng.cc
+
+sudo cp ./db_wbxng.cc gnuradio-3.4.2/usrp/host/lib/db_wbxng.cc
+
+### ROBERT, MY db_wbxng.cc files are custom for MY board so I don't have to have daughter cards###
+
+cd gnuradio-3.4.2
+
+./configure
+
+make
+
+sudo make install
+
+export PYTHONPATH=$PYTHONPATH:/usr/lib/python2.7/dist-packages
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/bin
+
+cp /etc/ld.so.conf /tmp/ld.so.conf
+
+echo /usr/local/lib >> /tmp/ld.so.conf
+
+echo /opt/boost_1_37_0/lib >> /tmp/ld.so.conf
+
+sudo mv /tmp/ld.so.conf /etc/ld.so.conf
+
+sudo ldconfig
+
+sudo addgroup usrp
+
+sudo addgroup `whoami` usrp
+
+echo 'ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="fffe", ATTR{idProduct}=="0002", GROUP:="usrp", MODE:"0660"' > tmpfile
+
+sudo chown root.root tmpfile
+
+sudo mv tmpfile /etc/udev/rules.d/10-usrp.rules
+
+sudo reboot
+
+ 
+Robert, below are the install instructions for OpenBTS:
+
+cd /home/YOURNAME/downloads/
+
+sudo apt-get install autoconf libtool libosip2-dev libortp-dev libusb-1.0-0-dev g++ sqlite3 libsqlite3-dev erlang libreadline6-dev libboost-all-dev
+
+sudo apt-get install subversion
+
+svn co http://wush.net/svn/range/software/public
+
+rm public/openbts/features/Cognitive_Radio_Elsabagh/apps/OpenBTS.config.example
+
+cp ./OpenBTS.config.example public/openbts/features/Cognitive_Radio_Elsabagh/apps/
+
+rm public/openbts/trunk/apps/OpenBTS.cpp
+
+cp ./OpenBTS.cpp public/openbts/trunk/apps/
+
+cd public/openbts/trunk/
+
+autoreconf -i
+
+./configure --with-usrp1 --with-singledb
+
+make
+
+sudo mkdir -p /usr/local/share/usrp/rev4/
+
+sudo cp ./Transceiver52M/std_inband.rbf /usr/local/share/usrp/rev4/
+
+sudo mkdir /etc/OpenBTS
+
+sudo sqlite3 -init ./apps/OpenBTS.example.sql /etc/OpenBTS/OpenBTS.db ".quit"
+
+cd ../../../
+
+sudo apt-get install sqliteman
+
+sudo sqliteman
+
+cd public/subscriberRegistry/trunk/configFiles/
+
+sudo mkdir -p /var/lib/asterisk/sqlite3dir
+
+sudo sqlite3 -init subscriberRegistryInit.sql  /var/lib/asterisk/sqlite3dir/sqlite3.db ".quit"
+
+cd ..
+
+make
+
+sudo sqlite3 -init sipauthserve.example.sql /etc/OpenBTS/sipauthserve.db ".quit"
+
+cd ../../
+
+cd smqueue/trunk
+
+autoreconf -i
+
+./configure
+
+make
+
+sudo sqlite3 -init smqueue/smqueue.example.sql /etc/OpenBTS/smqueue.db ".quit"
+
+cd ../../../
+
+sudo apt-get install asterisk
